@@ -16,15 +16,26 @@ LLM 개발 환경(Claude Code, Codex 등)에서 GitHub push 전 보안 감사 CL
 ## 설치
 
 ```bash
-pip install gitvault
+# pipx 권장 (전역 설치, 가상환경 불필요)
+pipx install git+https://github.com/beret21/GitVault.git
+
+# 업데이트
+pipx upgrade gitvault
 ```
 
-또는 소스에서:
+pipx가 없다면:
 
 ```bash
-git clone https://github.com/beret21/GitVault
+brew install pipx
+pipx ensurepath
+```
+
+개발용 설치:
+
+```bash
+git clone https://github.com/beret21/GitVault.git
 cd GitVault
-pip install -e .
+pip install -e ".[dev]"
 ```
 
 ## 빠른 시작
