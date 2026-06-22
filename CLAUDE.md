@@ -90,8 +90,54 @@ gitsentry audit . --llm
 gitsentry scan --all
 ```
 
+## 배포 정보
+
+| 항목 | 값 |
+|------|-----|
+| PyPI 패키지명 | `gitsentry` |
+| PyPI URL | https://pypi.org/project/gitsentry/ |
+| GitHub 저장소 | https://github.com/beret21/GitSentry |
+| 최초 배포 | 2026-06-22 (v0.1.0) |
+
+### 버전 관리 규칙
+
+- 형식: `0.1.###` — 마지막 자리(패치)만 증가 (0.1.0 → 0.1.1 → ...)
+- 목표: `0.1.999`까지
+- `0.2.0` 이상: 기능 구조가 크게 바뀔 때만
+
+### 사용자 설치 (새 컴퓨터)
+
+```bash
+brew install pipx && pipx ensurepath
+pipx install gitsentry
+pipx upgrade gitsentry   # 업데이트
+```
+
+### 개발자 배포 절차
+
+```bash
+# 1. pyproject.toml 버전 올리기 (예: 0.1.0 → 0.1.1)
+
+# 2. 빌드 & 업로드
+source .venv/bin/activate
+rm -rf dist/
+python -m build
+twine upload dist/*
+
+# 3. 커밋 & push
+git add pyproject.toml
+git commit -m "chore: bump version to 0.1.x"
+git push
+```
+
+### 배포 사전 요구사항
+
+- `~/.pypirc` 에 PyPI 토큰 설정 필요 (username = `__token__`, password = `pypi-...`)
+- `build`, `twine` 패키지 필요: `pip install build twine`
+
 ## 변경 이력
 
 | 날짜 | 내용 |
 |------|------|
 | 2026-06-22 | 초기 프로젝트 구조 생성, 6개 기능 구현 완료 (Phase 1-4) |
+| 2026-06-22 | gitvault → gitsentry 전체 이름 변경, PyPI 배포 (v0.1.0) |
