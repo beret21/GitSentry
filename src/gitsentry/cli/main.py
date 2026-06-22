@@ -1,10 +1,11 @@
+import json as _json
+from enum import Enum
 from pathlib import Path
 from typing import Optional
 
 import typer
 from rich.console import Console
 from rich.table import Table
-from rich import print as rprint
 
 from gitsentry.core.patterns import Severity
 
@@ -21,28 +22,58 @@ SEVERITY_COLORS = {
     Severity.INFO: "cyan",
 }
 
+# preview 인간 출력에서 생략할 노이즈 최상위 디렉토리
+PREVIEW_NOISE_DIRS = {
+    ".venv", "venv", "__pycache__", ".pytest_cache", ".ruff_cache",
+    ".mypy_cache", "node_modules", "dist", "build", ".git",
+}
+
+
+class OutputFormat(str, Enum):
+    human = "human"
+    json = "json"
+
 
 @app.command()
 def audit(
     path: Path = typer.Argument(Path("."), help="감사할 로컬 저장소 경로"),
     deep: bool = typer.Option(False, "--deep", help=".gitignore 파일도 포함해서 검사"),
     llm: bool = typer.Option(False, "--llm", help="Claude API로 결과 분석 요청"),
+    fmt: OutputFormat = typer.Option(OutputFormat.human, "--format", help="출력 형식 (human|json)"),
 ):
     """F1: 현재 저장소 공개 파일 보안 감사."""
     from gitsentry.core.auditor import audit_repo, summarize
 
     repo_path = path.resolve()
-    console.print(f"[bold]감사 중:[/bold] {repo_path}")
-
-    with console.status("파일 스캔 중..."):
-        findings = audit_repo(repo_path, deep=deep)
-
+    findings = audit_repo(repo_path, deep=deep)
     result = summarize(findings)
-    _print_findings_table(result["findings"])
-    _print_summary(result)
 
-    if llm and findings:
-        _run_llm_analysis(result)
+    if fmt == OutputFormat.json:
+        typer.echo(_json.dumps({
+            "path": str(repo_path),
+            "summary": {
+                "total": result["total"],
+                "danger": result["danger"],
+                "warning": result["warning"],
+                "info": result["info"],
+            },
+            "findings": [
+                {
+                    "file": f.file_path,
+                    "line": f.line_number,
+                    "content": f.masked_content(),
+                    "type": f.description,
+                    "severity": f.severity.value,
+                }
+                for f in result["findings"]
+            ],
+        }, ensure_ascii=False, indent=2))
+    else:
+        console.print(f"[bold]감사 중:[/bold] {repo_path}")
+        _print_findings_table(result["findings"])
+        _print_summary(result)
+        if llm and findings:
+            _run_llm_analysis(result)
 
     if result["danger"] > 0:
         raise typer.Exit(code=1)
@@ -53,16 +84,32 @@ def history(
     path: Path = typer.Argument(Path("."), help="감사할 로컬 저장소 경로"),
     max_commits: int = typer.Option(200, "--max-commits", "-n", help="검사할 최대 커밋 수"),
     llm: bool = typer.Option(False, "--llm", help="Claude API로 결과 분석 요청"),
+    fmt: OutputFormat = typer.Option(OutputFormat.human, "--format", help="출력 형식 (human|json)"),
 ):
     """F2: Git 커밋 히스토리 보안 감사."""
     from gitsentry.core.history import audit_history
 
     repo_path = path.resolve()
+    findings = audit_history(repo_path, max_commits=max_commits)
+
+    if fmt == OutputFormat.json:
+        typer.echo(_json.dumps({
+            "path": str(repo_path),
+            "total": len(findings),
+            "findings": [
+                {
+                    "commit": f.commit_hash,
+                    "file": f.file_path,
+                    "content": f.masked_content(),
+                    "type": f.description,
+                    "severity": f.severity.value,
+                }
+                for f in findings
+            ],
+        }, ensure_ascii=False, indent=2))
+        return
+
     console.print(f"[bold]히스토리 감사 중:[/bold] {repo_path} (최대 {max_commits}개 커밋)")
-
-    with console.status("커밋 히스토리 분석 중..."):
-        findings = audit_history(repo_path, max_commits=max_commits)
-
     if not findings:
         console.print("[green]히스토리에서 민감 정보를 발견하지 못했습니다.[/green]")
         return
@@ -86,33 +133,47 @@ def history(
     console.print(table)
 
     if llm and findings:
-        summary_text = _format_findings_for_llm(findings)
-        _run_llm_analysis_raw(summary_text)
+        _run_llm_analysis_raw(_format_findings_for_llm(findings))
 
 
 @app.command()
 def scan(
     all_repos: bool = typer.Option(False, "--all", help="계정 전체 저장소 감사"),
     repo: Optional[str] = typer.Option(None, "--repo", help="특정 저장소 (owner/repo)"),
+    fmt: OutputFormat = typer.Option(OutputFormat.human, "--format", help="출력 형식 (human|json)"),
 ):
     """F3: GitHub 원격 저장소 감사."""
-    from rich.progress import Progress, SpinnerColumn, TextColumn
-
     if not all_repos and not repo:
         console.print("[red]--all 또는 --repo owner/repo 옵션을 지정하세요.[/red]")
         raise typer.Exit(code=1)
 
     if all_repos:
+        from rich.progress import Progress, SpinnerColumn, TextColumn
         from gitsentry.core.scanner import scan_all_repos
-        findings = []
 
-        with Progress(SpinnerColumn(), TextColumn("{task.description}"), console=console) as progress:
-            task = progress.add_task("저장소 스캔 중...", total=None)
+        if fmt == OutputFormat.human:
+            with Progress(SpinnerColumn(), TextColumn("{task.description}"), console=console) as progress:
+                task = progress.add_task("저장소 스캔 중...", total=None)
+                findings = scan_all_repos(
+                    progress_callback=lambda name: progress.update(task, description=f"스캔 중: {name}")
+                )
+        else:
+            findings = scan_all_repos()
 
-            def on_progress(repo_name: str):
-                progress.update(task, description=f"스캔 중: {repo_name}")
-
-            findings = scan_all_repos(progress_callback=on_progress)
+        if fmt == OutputFormat.json:
+            typer.echo(_json.dumps({
+                "total": len(findings),
+                "findings": [
+                    {
+                        "repo": f.repo,
+                        "file": f.file_path,
+                        "type": f.description,
+                        "severity": f.severity.value,
+                    }
+                    for f in findings
+                ],
+            }, ensure_ascii=False, indent=2))
+            return
 
         if not findings:
             console.print("[green]전체 저장소에서 민감 정보를 발견하지 못했습니다.[/green]")
@@ -126,18 +187,14 @@ def scan(
 
         for f in findings:
             color = SEVERITY_COLORS[f.severity]
-            table.add_row(
-                f.repo,
-                f.file_path,
-                f.description,
-                f"[{color}]{f.severity.value}[/{color}]",
-            )
+            table.add_row(f.repo, f.file_path, f.description, f"[{color}]{f.severity.value}[/{color}]")
         console.print(table)
 
 
 @app.command()
 def preview(
     path: Path = typer.Argument(Path("."), help="미리보기할 로컬 저장소 경로"),
+    fmt: OutputFormat = typer.Option(OutputFormat.human, "--format", help="출력 형식 (human|json)"),
 ):
     """F4: Push 대상 vs 제외 파일 시각화."""
     from gitsentry.core.preview import get_push_preview
@@ -149,27 +206,49 @@ def preview(
     untracked = result["untracked"]
     gitignored = result["gitignored"]
 
+    def rel(f: Path) -> Path:
+        return f.relative_to(repo_path) if f.is_absolute() else f
+
+    if fmt == OutputFormat.json:
+        # JSON: 노이즈 필터 없이 전체 데이터 반환
+        typer.echo(_json.dumps({
+            "push": [str(rel(f)) for f in tracked],
+            "untracked": [str(rel(f)) for f in untracked],
+            "gitignored": [str(rel(f)) for f in gitignored],
+            "summary": {
+                "push_count": len(tracked),
+                "untracked_count": len(untracked),
+                "gitignored_count": len(gitignored),
+            },
+        }, ensure_ascii=False, indent=2))
+        return
+
+    # human: 노이즈 디렉토리 생략, 대신 묶어서 요약 표시
+    def is_noise(f: Path) -> bool:
+        r = rel(f)
+        return any(part in PREVIEW_NOISE_DIRS for part in r.parts) if r.parts else False
+
+    gitignored_clean = [f for f in gitignored if not is_noise(f)]
+    noise_count = len(gitignored) - len(gitignored_clean)
+
     table = Table(title="Push 미리보기")
     table.add_column("상태")
     table.add_column("파일")
 
     for f in tracked:
-        rel = f.relative_to(repo_path) if f.is_absolute() else f
-        table.add_row("[green]PUSH됨[/green]", str(rel))
-
+        table.add_row("[green]PUSH됨[/green]", str(rel(f)))
     for f in untracked:
-        rel = f.relative_to(repo_path) if f.is_absolute() else f
-        table.add_row("[yellow]UNTRACKED[/yellow]", str(rel))
-
-    for f in gitignored:
-        rel = f.relative_to(repo_path) if f.is_absolute() else f
-        table.add_row("[dim]제외됨(.gitignore)[/dim]", str(rel))
+        table.add_row("[yellow]UNTRACKED[/yellow]", str(rel(f)))
+    for f in gitignored_clean:
+        table.add_row("[dim]제외됨[/dim]", str(rel(f)))
+    if noise_count > 0:
+        table.add_row("[dim]제외됨[/dim]", f"[dim]... 외 {noise_count}개 (.venv 등 노이즈 생략)[/dim]")
 
     console.print(table)
     console.print(
         f"\n[green]PUSH됨: {len(tracked)}[/green]  "
         f"[yellow]UNTRACKED: {len(untracked)}[/yellow]  "
-        f"[dim]제외됨: {len(gitignored)}[/dim]"
+        f"[dim]제외됨: {len(gitignored)} (노이즈 {noise_count}개 생략 표시)[/dim]"
     )
 
 
@@ -216,7 +295,6 @@ def generate_skill(
 def _print_findings_table(findings) -> None:
     if not findings:
         return
-
     table = Table(title=f"감사 결과 ({len(findings)}건)")
     table.add_column("파일")
     table.add_column("라인", justify="right")
@@ -246,8 +324,7 @@ def _print_summary(result: dict) -> None:
 
 
 def _run_llm_analysis(result: dict) -> None:
-    summary_text = _format_findings_for_llm(result["findings"])
-    _run_llm_analysis_raw(summary_text)
+    _run_llm_analysis_raw(_format_findings_for_llm(result["findings"]))
 
 
 def _run_llm_analysis_raw(summary_text: str) -> None:
