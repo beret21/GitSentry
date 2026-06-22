@@ -16,19 +16,13 @@ LLM 개발 환경(Claude Code, Codex 등)에서 GitHub push 전 보안 감사 CL
 ## 설치
 
 ```bash
-# pipx 권장 (전역 설치, 가상환경 불필요)
-pipx install git+https://github.com/beret21/GitSentry.git
+pip install gitsentry
 
 # 업데이트
-pipx upgrade gitsentry
+pip install --upgrade gitsentry
 ```
 
-pipx가 없다면:
-
-```bash
-brew install pipx
-pipx ensurepath
-```
+> macOS에서 "externally-managed-environment" 오류 시: `pip install gitsentry --break-system-packages`
 
 개발용 설치:
 

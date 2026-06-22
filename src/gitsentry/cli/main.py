@@ -1,5 +1,4 @@
 import json as _json
-from enum import Enum
 from pathlib import Path
 from typing import Optional
 
@@ -29,17 +28,12 @@ PREVIEW_NOISE_DIRS = {
 }
 
 
-class OutputFormat(str, Enum):
-    human = "human"
-    json = "json"
-
-
 @app.command()
 def audit(
     path: Path = typer.Argument(Path("."), help="감사할 로컬 저장소 경로"),
     deep: bool = typer.Option(False, "--deep", help=".gitignore 파일도 포함해서 검사"),
     llm: bool = typer.Option(False, "--llm", help="Claude API로 결과 분석 요청"),
-    fmt: OutputFormat = typer.Option(OutputFormat.human, "--format", help="출력 형식 (human|json)"),
+    as_json: bool = typer.Option(False, "--json", help="JSON 출력 (LLM 연동용)"),
 ):
     """F1: 현재 저장소 공개 파일 보안 감사."""
     from gitsentry.core.auditor import audit_repo, summarize
@@ -48,7 +42,7 @@ def audit(
     findings = audit_repo(repo_path, deep=deep)
     result = summarize(findings)
 
-    if fmt == OutputFormat.json:
+    if as_json:
         typer.echo(_json.dumps({
             "path": str(repo_path),
             "summary": {
@@ -84,7 +78,7 @@ def history(
     path: Path = typer.Argument(Path("."), help="감사할 로컬 저장소 경로"),
     max_commits: int = typer.Option(200, "--max-commits", "-n", help="검사할 최대 커밋 수"),
     llm: bool = typer.Option(False, "--llm", help="Claude API로 결과 분석 요청"),
-    fmt: OutputFormat = typer.Option(OutputFormat.human, "--format", help="출력 형식 (human|json)"),
+    as_json: bool = typer.Option(False, "--json", help="JSON 출력 (LLM 연동용)"),
 ):
     """F2: Git 커밋 히스토리 보안 감사."""
     from gitsentry.core.history import audit_history
@@ -92,7 +86,7 @@ def history(
     repo_path = path.resolve()
     findings = audit_history(repo_path, max_commits=max_commits)
 
-    if fmt == OutputFormat.json:
+    if as_json:
         typer.echo(_json.dumps({
             "path": str(repo_path),
             "total": len(findings),
@@ -140,7 +134,7 @@ def history(
 def scan(
     all_repos: bool = typer.Option(False, "--all", help="계정 전체 저장소 감사"),
     repo: Optional[str] = typer.Option(None, "--repo", help="특정 저장소 (owner/repo)"),
-    fmt: OutputFormat = typer.Option(OutputFormat.human, "--format", help="출력 형식 (human|json)"),
+    as_json: bool = typer.Option(False, "--json", help="JSON 출력 (LLM 연동용)"),
 ):
     """F3: GitHub 원격 저장소 감사."""
     if not all_repos and not repo:
@@ -151,7 +145,7 @@ def scan(
         from rich.progress import Progress, SpinnerColumn, TextColumn
         from gitsentry.core.scanner import scan_all_repos
 
-        if fmt == OutputFormat.human:
+        if not as_json:
             with Progress(SpinnerColumn(), TextColumn("{task.description}"), console=console) as progress:
                 task = progress.add_task("저장소 스캔 중...", total=None)
                 findings = scan_all_repos(
@@ -160,7 +154,7 @@ def scan(
         else:
             findings = scan_all_repos()
 
-        if fmt == OutputFormat.json:
+        if as_json:
             typer.echo(_json.dumps({
                 "total": len(findings),
                 "findings": [
@@ -194,7 +188,7 @@ def scan(
 @app.command()
 def preview(
     path: Path = typer.Argument(Path("."), help="미리보기할 로컬 저장소 경로"),
-    fmt: OutputFormat = typer.Option(OutputFormat.human, "--format", help="출력 형식 (human|json)"),
+    as_json: bool = typer.Option(False, "--json", help="JSON 출력 (LLM 연동용)"),
 ):
     """F4: Push 대상 vs 제외 파일 시각화."""
     from gitsentry.core.preview import get_push_preview
@@ -209,7 +203,7 @@ def preview(
     def rel(f: Path) -> Path:
         return f.relative_to(repo_path) if f.is_absolute() else f
 
-    if fmt == OutputFormat.json:
+    if as_json:
         # JSON: 노이즈 필터 없이 전체 데이터 반환
         typer.echo(_json.dumps({
             "push": [str(rel(f)) for f in tracked],
