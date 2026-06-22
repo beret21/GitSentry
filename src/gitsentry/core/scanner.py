@@ -2,8 +2,8 @@
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from gitvault.utils.github_api import get_file_content, list_user_repos
-from gitvault.core.patterns import PATTERNS, Severity
+from gitsentry.utils.github_api import get_file_content, list_user_repos
+from gitsentry.core.patterns import PATTERNS, Severity
 
 
 @dataclass
@@ -38,7 +38,7 @@ def scan_remote_file(repo_name: str, file_path: str, content: str) -> list[Remot
 
 def scan_all_repos(progress_callback=None) -> list[RemoteFinding]:
     """계정 전체 저장소를 GitHub API로 감사."""
-    from gitvault.utils.github_api import get_repo_files
+    from gitsentry.utils.github_api import get_repo_files
 
     repos = list_user_repos()
     all_findings: list[RemoteFinding] = []

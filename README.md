@@ -1,4 +1,4 @@
-# GitVault
+# GitSentry
 
 LLM 개발 환경(Claude Code, Codex 등)에서 GitHub push 전 보안 감사 CLI 도구.
 
@@ -6,21 +6,21 @@ LLM 개발 환경(Claude Code, Codex 등)에서 GitHub push 전 보안 감사 CL
 
 | 명령 | 설명 |
 |------|------|
-| `gitvault audit .` | 현재 저장소 공개 파일 보안 감사 |
-| `gitvault history .` | Git 커밋 히스토리 보안 감사 |
-| `gitvault scan --all` | 계정 전체 GitHub 저장소 감사 |
-| `gitvault preview .` | Push 대상 vs 제외 파일 시각화 |
-| `gitvault pre-push` | Pre-push 훅 수동 실행 |
-| `gitvault generate-skill` | Claude Code 보안 감사 스킬 생성 |
+| `gitsentry audit .` | 현재 저장소 공개 파일 보안 감사 |
+| `gitsentry history .` | Git 커밋 히스토리 보안 감사 |
+| `gitsentry scan --all` | 계정 전체 GitHub 저장소 감사 |
+| `gitsentry preview .` | Push 대상 vs 제외 파일 시각화 |
+| `gitsentry pre-push` | Pre-push 훅 수동 실행 |
+| `gitsentry generate-skill` | Claude Code 보안 감사 스킬 생성 |
 
 ## 설치
 
 ```bash
 # pipx 권장 (전역 설치, 가상환경 불필요)
-pipx install git+https://github.com/beret21/GitVault.git
+pipx install git+https://github.com/beret21/GitSentry.git
 
 # 업데이트
-pipx upgrade gitvault
+pipx upgrade gitsentry
 ```
 
 pipx가 없다면:
@@ -33,8 +33,8 @@ pipx ensurepath
 개발용 설치:
 
 ```bash
-git clone https://github.com/beret21/GitVault.git
-cd GitVault
+git clone https://github.com/beret21/GitSentry.git
+cd GitSentry
 pip install -e ".[dev]"
 ```
 
@@ -42,10 +42,10 @@ pip install -e ".[dev]"
 
 ```bash
 # 현재 저장소 감사
-gitvault audit .
+gitsentry audit .
 
 # Push 전 미리보기
-gitvault preview .
+gitsentry preview .
 
 # pre-push 훅 설치
 ./scripts/install-hook.sh .

@@ -1,4 +1,4 @@
-# GitVault — CLAUDE.md
+# GitSentry — CLAUDE.md
 
 ## 프로젝트 정체성
 
@@ -27,7 +27,7 @@ LLM 개발 환경(Claude Code, Codex 등)에서 사람과 AI가 함께 작업할
 
 1. **LLM 없이도 기본 감사(F1-F4)는 완전히 동작** — `--llm` 플래그는 opt-in
 2. **감사 결과에 실제 비밀 값 포함 금지** — 항상 마스킹 처리
-3. **`gitvault audit .`로 자가 검증 통과** — 본 프로젝트도 감사 대상
+3. **`gitsentry audit .`로 자가 검증 통과** — 본 프로젝트도 감사 대상
 4. **GitHub push는 사용자 명시 요청 시에만**
 
 ## 개발 규칙
@@ -39,7 +39,7 @@ LLM 개발 환경(Claude Code, Codex 등)에서 사람과 AI가 함께 작업할
 ## 디렉토리 구조
 
 ```
-src/gitvault/
+src/gitsentry/
 ├── cli/main.py          # typer 진입점 — 6개 명령
 ├── core/
 │   ├── patterns.py      # 민감 정보 패턴 정의
@@ -58,7 +58,7 @@ src/gitvault/
 ## 앱 실행 방법
 
 ```bash
-cd /Users/beret21/Library/CloudStorage/Dropbox/Codes/Projects/GitVault
+cd /Users/beret21/Library/CloudStorage/Dropbox/Codes/Projects/GitSentry
 
 # 가상환경 설정 (최초 1회)
 python -m venv .venv
@@ -66,12 +66,12 @@ source .venv/bin/activate
 pip install -e ".[dev]"
 
 # 사용
-gitvault --help
-gitvault audit .
-gitvault preview .
-gitvault history . -n 50
-gitvault pre-push
-gitvault generate-skill .claude/skills/pre-push-audit/
+gitsentry --help
+gitsentry audit .
+gitsentry preview .
+gitsentry history . -n 50
+gitsentry pre-push
+gitsentry generate-skill .claude/skills/pre-push-audit/
 
 # 테스트
 pytest tests/unit/
@@ -84,10 +84,10 @@ pytest tests/unit/
 
 ```bash
 # 감사 + Claude 분석
-gitvault audit . --llm
+gitsentry audit . --llm
 
 # 전체 저장소 스캔
-gitvault scan --all
+gitsentry scan --all
 ```
 
 ## 변경 이력

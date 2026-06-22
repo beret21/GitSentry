@@ -18,7 +18,7 @@ def analyze_findings(findings_summary: str) -> str:
     client = get_anthropic_client()
 
     prompt = f"""당신은 Git 저장소 보안 전문가입니다.
-아래는 gitvault 보안 감사 도구가 발견한 결과입니다.
+아래는 gitsentry 보안 감사 도구가 발견한 결과입니다.
 
 {findings_summary}
 

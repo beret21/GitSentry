@@ -2,7 +2,7 @@
 import subprocess
 from pathlib import Path
 
-from gitvault.utils.git import get_tracked_files, get_untracked_files, is_git_repo
+from gitsentry.utils.git import get_tracked_files, get_untracked_files, is_git_repo
 
 
 def get_push_preview(repo_path: Path) -> dict:

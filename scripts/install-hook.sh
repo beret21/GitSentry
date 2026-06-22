@@ -1,5 +1,5 @@
 #!/bin/bash
-# GitVault pre-push 훅 설치 스크립트
+# GitSentry pre-push 훅 설치 스크립트
 # 사용법: ./scripts/install-hook.sh [저장소 경로]
 
 REPO_PATH="${1:-.}"
@@ -12,8 +12,8 @@ fi
 
 cat > "$HOOK_PATH" << 'EOF'
 #!/bin/bash
-# GitVault pre-push security hook
-gitvault pre-push .
+# GitSentry pre-push security hook
+gitsentry pre-push .
 exit $?
 EOF
 

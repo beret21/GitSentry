@@ -6,10 +6,10 @@ from rich.console import Console
 from rich.table import Table
 from rich import print as rprint
 
-from gitvault.core.patterns import Severity
+from gitsentry.core.patterns import Severity
 
 app = typer.Typer(
-    name="gitvault",
+    name="gitsentry",
     help="LLM 개발 환경의 GitHub 보안 감사 도구",
     no_args_is_help=True,
 )
@@ -29,7 +29,7 @@ def audit(
     llm: bool = typer.Option(False, "--llm", help="Claude API로 결과 분석 요청"),
 ):
     """F1: 현재 저장소 공개 파일 보안 감사."""
-    from gitvault.core.auditor import audit_repo, summarize
+    from gitsentry.core.auditor import audit_repo, summarize
 
     repo_path = path.resolve()
     console.print(f"[bold]감사 중:[/bold] {repo_path}")
@@ -55,7 +55,7 @@ def history(
     llm: bool = typer.Option(False, "--llm", help="Claude API로 결과 분석 요청"),
 ):
     """F2: Git 커밋 히스토리 보안 감사."""
-    from gitvault.core.history import audit_history
+    from gitsentry.core.history import audit_history
 
     repo_path = path.resolve()
     console.print(f"[bold]히스토리 감사 중:[/bold] {repo_path} (최대 {max_commits}개 커밋)")
@@ -103,7 +103,7 @@ def scan(
         raise typer.Exit(code=1)
 
     if all_repos:
-        from gitvault.core.scanner import scan_all_repos
+        from gitsentry.core.scanner import scan_all_repos
         findings = []
 
         with Progress(SpinnerColumn(), TextColumn("{task.description}"), console=console) as progress:
@@ -140,7 +140,7 @@ def preview(
     path: Path = typer.Argument(Path("."), help="미리보기할 로컬 저장소 경로"),
 ):
     """F4: Push 대상 vs 제외 파일 시각화."""
-    from gitvault.core.preview import get_push_preview
+    from gitsentry.core.preview import get_push_preview
 
     repo_path = path.resolve()
     result = get_push_preview(repo_path)
@@ -178,7 +178,7 @@ def pre_push(
     path: Path = typer.Argument(Path("."), help="감사할 저장소 경로"),
 ):
     """F5: Pre-push 훅 — push 전 자동 보안 감사."""
-    from gitvault.core.auditor import audit_repo, summarize
+    from gitsentry.core.auditor import audit_repo, summarize
 
     repo_path = path.resolve()
     findings = audit_repo(repo_path)
@@ -206,7 +206,7 @@ def generate_skill(
     ),
 ):
     """F6: Claude Code pre-push-audit 메타 스킬 생성."""
-    from gitvault.llm.skill_gen import generate_skill as gen
+    from gitsentry.llm.skill_gen import generate_skill as gen
 
     skill_path = gen(output_dir.resolve())
     console.print(f"[green]스킬 생성 완료:[/green] {skill_path}")
@@ -251,7 +251,7 @@ def _run_llm_analysis(result: dict) -> None:
 
 
 def _run_llm_analysis_raw(summary_text: str) -> None:
-    from gitvault.llm.client import analyze_findings
+    from gitsentry.llm.client import analyze_findings
 
     console.print("\n[bold]Claude 분석 중...[/bold]")
     with console.status("Claude API 요청 중..."):

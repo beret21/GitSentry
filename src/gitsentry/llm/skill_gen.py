@@ -1,7 +1,7 @@
 """F6: Claude Code 메타 스킬 자동 생성."""
 from pathlib import Path
 
-from gitvault.core.patterns import PATTERNS, Severity
+from gitsentry.core.patterns import PATTERNS, Severity
 
 
 def generate_skill(output_dir: Path) -> Path:
@@ -79,10 +79,10 @@ agents:
 ## 관련 명령
 
 ```bash
-gitvault audit .          # 현재 저장소 감사
-gitvault history .        # 히스토리 감사
-gitvault preview .        # push 대상 미리보기
-gitvault pre-push         # pre-push 훅 수동 실행
+gitsentry audit .          # 현재 저장소 감사
+gitsentry history .        # 히스토리 감사
+gitsentry preview .        # push 대상 미리보기
+gitsentry pre-push         # pre-push 훅 수동 실행
 ```
 """
     skill_path.write_text(content, encoding="utf-8")

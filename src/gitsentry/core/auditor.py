@@ -2,8 +2,8 @@
 import re
 from pathlib import Path
 
-from gitvault.core.patterns import PATTERNS, Finding, Severity
-from gitvault.utils.git import get_tracked_files, is_git_repo
+from gitsentry.core.patterns import PATTERNS, Finding, Severity
+from gitsentry.utils.git import get_tracked_files, is_git_repo
 
 SKIP_EXTENSIONS = {".png", ".jpg", ".jpeg", ".gif", ".ico", ".svg",
                    ".woff", ".woff2", ".ttf", ".eot", ".pdf", ".zip",

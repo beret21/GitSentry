@@ -3,8 +3,8 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
-from gitvault.core.patterns import PATTERNS, Severity
-from gitvault.utils.git import get_commit_diff, get_commit_log, is_git_repo
+from gitsentry.core.patterns import PATTERNS, Severity
+from gitsentry.utils.git import get_commit_diff, get_commit_log, is_git_repo
 
 
 @dataclass

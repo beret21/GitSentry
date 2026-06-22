@@ -1,6 +1,6 @@
 """패턴 탐지 단위 테스트."""
 import pytest
-from gitvault.core.patterns import PATTERNS, Severity
+from gitsentry.core.patterns import PATTERNS, Severity
 
 
 def get_pattern(description: str):
