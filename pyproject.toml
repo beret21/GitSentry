@@ -1,6 +1,6 @@
 [project]
 name = "gitsentry"
-version = "0.1.0"
+version = "0.1.1"
 description = "GitHub security audit CLI for LLM-assisted development environments"
 readme = "README.md"
 license = { text = "MIT" }

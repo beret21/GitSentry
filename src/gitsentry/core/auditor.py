@@ -9,6 +9,10 @@ SKIP_EXTENSIONS = {".png", ".jpg", ".jpeg", ".gif", ".ico", ".svg",
                    ".woff", ".woff2", ".ttf", ".eot", ".pdf", ".zip",
                    ".tar", ".gz", ".dmg", ".exe", ".dylib", ".so"}
 
+# 이 디렉토리/파일은 의도적으로 패턴 문자열을 포함하므로 DANGER 미적용
+SKIP_DANGER_DIRS = {"tests"}
+SKIP_DANGER_FILES = {".env.example", ".env.sample", ".env.template"}
+
 
 def audit_file(file_path: Path) -> list[Finding]:
     if file_path.suffix.lower() in SKIP_EXTENSIONS:
@@ -31,6 +35,14 @@ def audit_file(file_path: Path) -> list[Finding]:
                     pattern=pattern,
                     matched_text=m.group(0),
                 ))
+
+    is_safe_context = (
+        any(part in SKIP_DANGER_DIRS for part in file_path.parts) or
+        file_path.name in SKIP_DANGER_FILES
+    )
+    if is_safe_context:
+        findings = [f for f in findings if f.severity != Severity.DANGER]
+
     return findings
 
 

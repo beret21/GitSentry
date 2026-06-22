@@ -132,7 +132,7 @@ git push
 
 ### 배포 사전 요구사항
 
-- `~/.pypirc` 에 PyPI 토큰 설정 필요 (username = `__token__`, password = `pypi-...`)
+- `~/.pypirc` 에 PyPI 토큰 설정 필요 (username: `__token__`, 토큰 값: `pypi-` 로 시작하는 문자열)
 - `build`, `twine` 패키지 필요: `pip install build twine`
 
 ## 변경 이력

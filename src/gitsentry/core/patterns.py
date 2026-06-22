@@ -26,8 +26,8 @@ PATTERNS: list[Pattern] = [
     Pattern(r"ghp_[A-Za-z0-9]{36}", "GitHub Personal Access Token", Severity.DANGER),
     Pattern(r"ghs_[A-Za-z0-9]{36}", "GitHub Server Token", Severity.DANGER),
     Pattern(r"Bearer [A-Za-z0-9\-._~+/]{20,}=*", "Bearer Token", Severity.DANGER),
-    Pattern(r"[Aa][Pp][Ii][_-]?[Kk][Ee][Yy]\s*[:=]\s*['\"]?\S{8,}", "API Key Assignment", Severity.DANGER),
-    Pattern(r"[Pp][Aa][Ss][Ss][Ww][Oo][Rr][Dd]\s*[:=]\s*['\"]?\S{4,}", "Password Assignment", Severity.DANGER),
+    Pattern(r"[Aa][Pp][Ii][_-]?[Kk][Ee][Yy]\s*[:=]\s*(?!os\.getenv)(?![A-Za-z_]\w*[,\)\s])(?!\S*\.\.\.)['\"]?\S{8,}", "API Key Assignment", Severity.DANGER),
+    Pattern(r"[Pp][Aa][Ss][Ss][Ww][Oo][Rr][Dd]\s*=\s*(?!pypi-)(?![A-Za-z_]\w*[,\)\s])['\"]?\S{4,}", "Password Assignment", Severity.DANGER),
     Pattern(r"[Ss][Ee][Cc][Rr][Ee][Tt]\s*[:=]\s*['\"]?\S{4,}", "Secret Assignment", Severity.DANGER),
     Pattern(r"AKIA[A-Z0-9]{16}", "AWS Access Key ID", Severity.DANGER),
     # LLM 개발 내부 문서 — WARNING
